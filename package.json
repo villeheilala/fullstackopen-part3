@@ -19,6 +19,7 @@
 	},
 	"homepage": "https://github.com/villeheilala/fullstackopen-part3#readme",
 	"dependencies": {
+		"morgan": "^1.9.1",
 		"body-parser": "^1.18.3",
 		"express": "^4.16.4"
 	},
