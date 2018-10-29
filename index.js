@@ -58,7 +58,7 @@ app.delete('/api/persons/:id', (request, response) => {
 
 const generateId = () => {
 	const maxId = persons.length > 0 ? persons.map(person => person.id).sort((a, b) => a - b).reverse()[0] : 1
-	return maxId
+	return maxId + 1
 }
 
 app.post('/api/persons/', (request, response) => {
