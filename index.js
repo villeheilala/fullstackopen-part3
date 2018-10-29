@@ -6,6 +6,7 @@ const app = express()
 app.use(bodyParser.json())
 morgan.token('data', function (req, res) { return JSON.stringify(req.body) })
 app.use(morgan(':method :url :data :status :res[content-length] - :response-time ms'))
+app.use(express.static('build'))
 
 let persons = [
 	{
