@@ -1,5 +1,8 @@
 const express = require('express')
+const bodyParser = require('body-parser')
 const app = express()
+
+app.use(bodyParser.json())
 
 let persons = [
 	{
@@ -48,6 +51,33 @@ app.delete('/api/persons/:id', (request, response) => {
 	persons = persons.filter(person => person.id !== id)
 
 	response.status(204).end()
+})
+
+const generateId = () => {
+	const maxId = persons.length > 0 ? persons.map(person => person.id).sort((a, b) => a - b).reverse()[0] : 1
+	return maxId
+}
+
+app.post('/api/persons/', (request, response) => {
+	const body = request.body
+	
+	if (body.name === undefined || body.phone === undefined) {
+		return response.status(400).json({error: 'body content missing'})
+	}
+
+	if (persons.some(person => person.name === body.name)) {
+		return response.status(400).json({error: `person ${body.name} already exists`})
+	}
+
+	const person = {
+		name: body.name,
+		phone: body.phone,
+		id: generateId()
+	}
+
+	persons = persons.concat(person)
+
+	response.json(person)
 })
 
 app.get('/info', (request, response) => {
