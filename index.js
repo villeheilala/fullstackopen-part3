@@ -1,6 +1,8 @@
 const express = require('express')
 const bodyParser = require('body-parser')
 const morgan = require('morgan')
+const Person = require('./models/person')
+
 const app = express()
 
 app.use(bodyParser.json())
@@ -31,12 +33,23 @@ let persons = [
 	}
 ]
 
+//const formatPerson = (person) => {
+//	const formattedPerson = {...person._doc, id: person._id}
+//	delete formattedPerson._id
+//	delete formattedPerson.__v
+//	return formattedPerson
+//}
+
 app.get('/', (request, response) => {
 	response.send('<p>Server running...</p>')
 })
 
 app.get('/api/persons', (request, response) => {
-	response.json(persons)
+	Person
+		.find({}, {__v: 0})
+		.then(persons => {
+			response.json(persons.map(Person.format))
+		})
 })
 
 app.get('/api/persons/:id', (request, response) => {
