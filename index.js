@@ -44,6 +44,7 @@ app.get('/', (request, response) => {
 	response.send('<p>Server running...</p>')
 })
 
+// endpoin for getting all persons
 app.get('/api/persons', (request, response) => {
 	Person
 		.find({}, {__v: 0})
@@ -82,19 +83,21 @@ app.post('/api/persons/', (request, response) => {
 		return response.status(400).json({error: 'body content missing'})
 	}
 
-	if (persons.some(person => person.name === body.name)) {
-		return response.status(400).json({error: `person ${body.name} already exists`})
-	}
+	//if (persons.some(person => person.name === body.name)) {
+	//	return response.status(400).json({error: `person ${body.name} already exists`})
+	//}
 
-	const person = {
+	const person = new Person({
 		name: body.name,
 		phone: body.phone,
-		id: generateId()
-	}
+	})
 
-	persons = persons.concat(person)
+	person
+		.save()
+		.then(savedPerson => {
+			response.json(Person.format(savedPerson))
+		})
 
-	response.json(person)
 })
 
 app.get('/info', (request, response) => {
