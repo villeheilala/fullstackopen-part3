@@ -10,7 +10,7 @@ morgan.token('data', function (req, res) { return JSON.stringify(req.body) })
 app.use(morgan(':method :url :data :status :res[content-length] - :response-time ms'))
 app.use(express.static('build'))
 
-let persons = [
+/*let persons = [
 	{
 		name: "Arto Hellas",
 		phone: "040-123456",
@@ -31,14 +31,14 @@ let persons = [
 		phone: "040-123456",
 		id: 4
 	}
-]
+]*/
 
-//const formatPerson = (person) => {
-//	const formattedPerson = {...person._doc, id: person._id}
-//	delete formattedPerson._id
-//	delete formattedPerson.__v
-//	return formattedPerson
-//}
+/*const formatPerson = (person) => {
+	const formattedPerson = {...person._doc, id: person._id}
+	delete formattedPerson._id
+	delete formattedPerson.__v
+	return formattedPerson
+}*/
 
 app.get('/', (request, response) => {
 	response.send('<p>Server running...</p>')
@@ -54,31 +54,58 @@ app.get('/api/persons', (request, response) => {
 })
 
 app.get('/api/persons/:id', (request, response) => {
-	const id = Number(request.params.id)
-	const person = persons.find(person => person.id === id)
+	Person
+		.findById(request.params.id)
+		.then(person => {
+			if (person) {
+				response.json(Person.format(person))
+			} else {
+				response.status(404).end()
+			}
+		})
+		.catch(error => {
+			console.log(error)
+			response.status(400).send({ error: "malformatted id" })
+		})
+})
 
-	if ( person ) {
-		response.json(person)
-	} else {
-		response.status(404).end()
+app.put('/api/persons/:id', (request, response) => {
+	const body = request.body
+
+	if (body.phone === undefined) {
+		return response.status(400).json({error: 'body content missing'})
 	}
+
+	Person
+		.findByIdAndUpdate(request.params.id, { phone: body.phone }, { new: true })
+		.then(updatedPerson => {
+			response.json(Person.format(updatedPerson))
+		})
+		.catch(error => {
+			console.log(error)
+			reponse.status(400).send({ error: "malformatted id" })
+		})
 })
 
 app.delete('/api/persons/:id', (request, response) => {
-	const id = Number(request.params.id)
-	persons = persons.filter(person => person.id !== id)
-
-	response.status(204).end()
+	Person
+		.findByIdAndRemove(request.params.id)
+		.then(result => {
+			response.status(204).end()
+		})
+		.catch(error => {
+			response.status(400).send({ error: "malformatted id" })
+		})
 })
 
-const generateId = () => {
-	const maxId = persons.length > 0 ? persons.map(person => person.id).sort((a, b) => a - b).reverse()[0] : 1
-	return maxId + 1
-}
+//const generateId = () => {
+//	const maxId = persons.length > 0 ? persons.map(person => person.id).sort((a, b) => a - b).reverse()[0] : 1
+//	return maxId + 1
+//}
 
 app.post('/api/persons/', (request, response) => {
 	const body = request.body
-	
+
 	if (body.name === undefined || body.phone === undefined) {
 		return response.status(400).json({error: 'body content missing'})
 	}
@@ -92,17 +119,26 @@ app.post('/api/persons/', (request, response) => {
 		phone: body.phone,
 	})
 
-	person
-		.save()
-		.then(savedPerson => {
+	Person
+		.find({ name: body.name })
+		.then(result => {
+			if (result.length) { throw new Error() }
+			return person.save()
+		}).then(savedPerson => {
 			response.json(Person.format(savedPerson))
+		}).catch(err => {
+			return response.status(409).send({ error: "Conflict: Duplicate entity" })
 		})
 
 })
 
 app.get('/info', (request, response) => {
-	response.send(`<p>Database contains information about ${persons.length} persons</p>
-		<p>${new Date()}</p>`)
+	Person
+		.estimatedDocumentCount()
+		.then(count => {
+			response.send(`<p>Database contains information about ${count} persons</p>
+			<p>${new Date()}</p>`)
+		})
 })
 
 const PORT = process.env.PORT || 3001
